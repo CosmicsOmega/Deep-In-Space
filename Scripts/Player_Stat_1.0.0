@@ -1,0 +1,396 @@
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Player_Stats : MonoBehaviour
+{
+    public Transform Player_Transform;
+
+    public bool DebugMode = false;
+    public float TEST_EXP = 50;
+    public float T = 10;
+    public float T2 = 2;
+    public float T3 = 5;
+    public float T4 = 2;
+
+    #region Initialise Stats
+    public string PlayerName = "Player";
+
+    #region Level
+    public float Level = 1;
+    public float MaxExp = 100;
+    public float CurrentExp = 0;
+    public Slider EXP_Slider;
+    public Text T_Level;
+    #endregion
+
+    #region Health
+    public float MaxHealth = 100;
+    public bool Reger = true;
+    public float RegCooldown = 0;
+    public float CurrentHealth = 100;
+    public bool PlayerAlive;
+    public Slider Health_Slider;
+    #endregion
+
+    #region Hunger
+    public float MaxHunger = 100;
+    public float CurrentHunger = 100;
+    public bool HasHunger;
+    public Slider Hunger_Slider;
+    #endregion
+
+    #region Thirst
+    public float MaxThirst = 100;
+    public float CurrentThirst = 100;
+    public bool HasThirst;
+    public Slider Thirst_Slider;
+    #endregion
+    #endregion
+
+    #region Player_Position
+    public float X;
+    public float Y;
+    public float Z;
+
+    public float X_Rotation;
+    public float Y_Rotation;
+    public float Z_Rotation;
+    public float W_Rotation;
+    #endregion
+
+    void Start()
+    {
+        LoadData();
+    }
+
+    #region Save/Load
+    void SaveData()
+    {
+        if (!Directory.Exists(Application.persistentDataPath + "/Saves"))
+        {
+            var folder = Directory.CreateDirectory(Application.persistentDataPath + "/Saves");
+        }
+
+        string destination = Application.persistentDataPath + "/Saves" + "/" + PlayerName + "_save.dat";
+        FileStream file;
+
+        if (File.Exists(destination)) { file = File.OpenWrite(destination); }
+        else { file = File.Create(destination); }
+
+        StatSave data = new StatSave(PlayerName, Level, MaxExp, CurrentExp, MaxHealth, RegCooldown, Reger, CurrentHealth, PlayerAlive, MaxHunger, CurrentHunger, HasHunger, MaxThirst, CurrentThirst, HasThirst, X, Y, Z, X_Rotation, Y_Rotation, Z_Rotation, W_Rotation);
+        BinaryFormatter bf = new BinaryFormatter();
+        bf.Serialize(file, data);
+        file.Close();
+
+        Debug.Log("Saved Data to: " + destination);
+    }
+
+    void LoadData()
+    {
+        string destination = Application.persistentDataPath + "/Saves" + "/" + PlayerName + "_save.dat";
+        FileStream file;
+
+        if (File.Exists(destination)) { file = File.OpenRead(destination); }
+        else
+        {
+            Debug.Log("File " + destination + " not found");
+            return;
+        }
+
+        BinaryFormatter bf = new BinaryFormatter();
+        StatSave data = (StatSave)bf.Deserialize(file);
+        file.Close();
+
+        PlayerName = data.PlayerName;
+
+        Level = data.Level;
+        MaxExp = data.MaxExp;
+        CurrentExp = data.CurrentExp;
+
+        MaxHealth = data.MaxHealth;
+        Reger = data.Reger;
+        RegCooldown = data.RegCooldown;
+        CurrentHealth = data.CurrentHealth;
+        PlayerAlive = data.PlayerAlive;
+
+        MaxHunger = data.MaxHunger;
+        CurrentHunger = data.CurrentHunger;
+        HasHunger = data.HasHunger;
+
+        MaxThirst = data.MaxThirst;
+        CurrentThirst = data.CurrentThirst;
+        HasThirst = data.HasThirst;
+
+        X = data.X;
+        Y = data.Y;
+        Z = data.Z;
+
+        Player_Transform.position = new Vector3(data.X, data.Y, data.Z);
+
+        X_Rotation = data.X_Rotation;
+        Y_Rotation = data.Y_Rotation;
+        Z_Rotation = data.Z_Rotation;
+        W_Rotation = data.W_Rotation;
+
+        Player_Transform.rotation = new Quaternion(data.X_Rotation, data.Y_Rotation, data.Z_Rotation, data.W_Rotation);
+
+        Debug.Log("Loaded data from: " + destination);
+    }
+    #endregion
+
+    void Update()
+    {
+        #region Stat Debug
+        if (DebugMode == true)
+        {
+            Debug.LogWarning("DEBUGMODE ACTIVE");
+        }
+        else if(DebugMode == false)
+        {
+            Debug.LogWarning("DEBUGMODE DEACTIVE");
+        }
+
+        if (Input.GetKeyDown(KeyCode.D) && DebugMode == true)
+        {
+            GetDamage(11);
+        }
+
+        if(Input.GetKeyDown(KeyCode.S) && DebugMode == true)
+        {
+            SaveData();
+        }
+
+        if(Input.GetKeyDown(KeyCode.L) && DebugMode == true)
+        {
+            LoadData();
+        }
+
+        if (Input.GetKeyDown(KeyCode.A) && DebugMode == true)
+        {
+            GetExp(TEST_EXP);
+        }
+
+        if(Input.GetKeyDown(KeyCode.G) && DebugMode == true)
+        {
+            CurrentHunger -= 50;
+            CurrentThirst -= 75;
+        }
+        #endregion
+        #region Update_Health
+        if(CurrentHealth <= 0)
+        {
+            Die();
+            PlayerAlive = false;
+        }
+        else if(CurrentHealth > 0)
+        {
+            PlayerAlive = true;
+        }
+        if (CurrentHealth < MaxHealth && Reger == true && PlayerAlive == true)
+        {
+            Regenerate();
+        }
+
+        if(CurrentHealth > MaxHealth)
+        {
+            CurrentHealth = MaxHealth;
+        }
+
+        if(RegCooldown > 0 && PlayerAlive == true)
+        {
+            RegCooldown -= Time.deltaTime * 1.5f;
+        }
+
+        if(RegCooldown < 0 )
+        {
+            RegCooldown = 0;
+        }
+
+        if(RegCooldown == 0)
+        {
+            Reger = true;
+        }
+        else
+        {
+            Reger = false;
+        }
+        #endregion
+        #region Update_Hunger
+        if(CurrentHunger <= 0 && PlayerAlive == true)
+        {
+            HasHunger = true;
+        }
+        else
+        {
+            HasHunger = false;
+        }
+        if(CurrentHunger > 0 && CurrentHunger <= MaxHunger && HasHunger == false && PlayerAlive == true)
+        {
+            T -= Time.deltaTime;
+            if (T <= 0)
+            {
+                CurrentHunger -= 1;
+                T = 10;
+            }
+        }
+        if(CurrentHunger <= 0 && HasHunger == true && PlayerAlive == true)
+        {
+            T2 -= Time.deltaTime;
+
+            if(T2 <= 0)
+            {
+                T2 = 2;
+                CurrentHealth -= 5;
+            }
+        }
+        #endregion
+        #region Update_Thirst
+        if(CurrentThirst <= 0 && PlayerAlive == true)
+        {
+            HasThirst = true;
+        }
+        else
+        {
+            HasThirst = false;
+        }
+        if(CurrentThirst > 0 && CurrentThirst <= MaxThirst && HasThirst == false && PlayerAlive == true)
+        {
+            T3 -= Time.deltaTime;
+            if(T3 <= 0)
+            {
+                CurrentThirst -= 1;
+                T3 = 5;
+            }
+        }
+        if(CurrentThirst <= 0 && HasThirst == true && PlayerAlive == true)
+        {
+            T4 -= Time.deltaTime;
+            if(T4 <= 0)
+            {
+                T4 = 2;
+                CurrentHealth -= 5;
+            }
+        }
+        #endregion
+
+        #region Get Position, Get Rotation
+        X = Player_Transform.position.x;
+        Y = Player_Transform.position.y;
+        Z = Player_Transform.position.z;
+
+        X_Rotation = Player_Transform.rotation.x;
+        Y_Rotation = Player_Transform.rotation.y;
+        Z_Rotation = Player_Transform.rotation.z;
+        W_Rotation = Player_Transform.rotation.w;
+        #endregion
+
+        #region Bars
+        Modifie_Exp_Bar();
+        Modifie_Health_Bar();
+        Modifie_Hunger_Bar();
+        Modifie_Thirst_Bar();
+        #endregion
+    }
+    #region Modifie Stats
+    #region Level
+    public void GetExp(float Exp)
+    {
+        if(CurrentExp + Exp >= MaxExp)
+        {
+            float T = (CurrentExp + Exp);
+            T -= MaxExp;
+            LevelUp();
+            MaxExp = 100 * Level;
+            CurrentExp += T;
+            if (CurrentExp + T > MaxExp)
+            {
+                GetExp(T);
+            }
+        }
+        else if (CurrentExp + Exp < MaxExp)
+        {
+            CurrentExp += Exp;
+        }
+    }
+
+    public void LevelUp()
+    {
+        Level += 1;
+        CurrentExp = 0;
+    }
+    #endregion
+    #region Health
+    void Regenerate()
+    {
+        CurrentHealth += Time.deltaTime / 2;
+    }
+
+    public void GetDamage(float T_damage)
+    {
+        CurrentHealth -= T_damage;
+
+        RegCooldown = 10;
+
+        if(CurrentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        Debug.Log("Player Died");
+    }
+    #endregion
+    #region Hunger
+    public void Eat(float E)
+    {
+        CurrentHunger += E;
+        if(CurrentHunger > MaxHunger)
+        {
+            CurrentHunger = MaxHunger;
+        }
+    }
+    #endregion
+    #region Thirst
+    public void Drink(float E)
+    {
+        CurrentThirst += E;
+        if(CurrentThirst > MaxThirst)
+        {
+            CurrentThirst = MaxThirst;
+        }
+    }
+    #endregion
+    #endregion
+    #region Bars
+    public void Modifie_Exp_Bar()
+    {
+        EXP_Slider.maxValue = MaxExp;
+        EXP_Slider.value = CurrentExp;
+        T_Level.text = Level.ToString();
+    }
+
+    public void Modifie_Health_Bar()
+    {
+        Health_Slider.maxValue = MaxHealth;
+        Health_Slider.value = CurrentHealth;
+    }
+
+    public void Modifie_Hunger_Bar()
+    {
+        Hunger_Slider.maxValue = MaxHunger;
+        Hunger_Slider.value = CurrentHunger;
+    }
+
+    public void Modifie_Thirst_Bar()
+    {
+        Thirst_Slider.maxValue = MaxThirst;
+        Thirst_Slider.value = CurrentThirst;
+    }
+    #endregion
+}
