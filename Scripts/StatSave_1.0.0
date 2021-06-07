@@ -1,0 +1,63 @@
+[System.Serializable]
+public class StatSave
+{
+    public string PlayerName;
+
+    public float Level = 1;
+    public float MaxExp = 100;
+    public float CurrentExp = 0;
+
+    public float MaxHealth = 100;
+    public bool Reger = true;
+    public float RegCooldown = 0;
+    public float CurrentHealth = 100;
+    public bool PlayerAlive;
+
+    public float MaxHunger = 100;
+    public float CurrentHunger = 100;
+    public bool HasHunger;
+
+    public float MaxThirst = 100;
+    public float CurrentThirst = 100;
+    public bool HasThirst;
+
+    public float X;
+    public float Y;
+    public float Z;
+
+    public float X_Rotation;
+    public float Y_Rotation;
+    public float Z_Rotation;
+    public float W_Rotation;
+
+    public StatSave(string S_PlayerName, float S_Level, float S_MaxExp, float S_CurrentExp, float S_MaxHealth, float S_RegCooldown, bool S_Reger, float S_CurrentHealth, bool S_PlayerAlive, float S_MaxHunger, float S_CurrentHunger, bool S_HasHunger, float S_MaxThirst, float S_CurrentThirst, bool S_HasThirst, float S_X, float S_Y, float S_Z, float S_X_Rotation, float S_Y_Rotation, float S_Z_Rotation, float S_W_Rotation)
+    {
+        PlayerName = S_PlayerName;
+
+        Level = S_Level;
+        MaxExp = S_MaxExp;
+        CurrentExp = S_CurrentExp;
+
+        MaxHealth = S_MaxHealth;
+        RegCooldown = S_RegCooldown;
+        Reger = S_Reger;
+        CurrentHealth = S_CurrentHealth;
+        PlayerAlive = S_PlayerAlive;
+
+        MaxHunger = S_MaxHunger;
+        CurrentHunger = S_CurrentHunger;
+        HasHunger = S_HasHunger;
+
+        MaxThirst = S_MaxThirst;
+        CurrentThirst = S_CurrentThirst;
+        HasThirst = S_HasThirst;
+
+        X = S_X;
+        X_Rotation = S_X_Rotation;
+        Y = S_Y;
+        Y_Rotation = S_Y_Rotation;
+        Z = S_Z;
+        Z_Rotation = S_Z_Rotation;
+        W_Rotation = S_W_Rotation;
+    }
+}
